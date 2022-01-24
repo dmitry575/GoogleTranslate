@@ -2,6 +2,7 @@
 
 using System.Reflection;
 using CommandLine;
+using GoogleTranslate.Common.Impl;
 using GoogleTranslate.Config;
 using GoogleTranslate.Errors;
 using GoogleTranslate.Translate;
@@ -23,7 +24,7 @@ var arguments = Parser.Default.ParseArguments<Configuration>(args)
 if (!errorHandle.HasError)
 {
 
-    var translate = new GoogleTranslateFiles(configuration);
+    var translate = new GoogleTranslateFiles(configuration, new File());
     await translate.TranslateAsync();
 
     translate.PrintResult();
