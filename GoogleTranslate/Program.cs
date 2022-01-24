@@ -4,6 +4,10 @@ using System.Reflection;
 using CommandLine;
 using GoogleTranslate.Config;
 using GoogleTranslate.Errors;
+using GoogleTranslate.Translate;
+using log4net.Config;
+
+[assembly: XmlConfigurator(Watch = true, ConfigFile = "log4net.config")]
 
 Console.WriteLine($"Start program translating files through the Google Translate");
 Console.WriteLine($"Version: {Assembly.GetExecutingAssembly().GetName().Version}");
@@ -19,8 +23,8 @@ var arguments = Parser.Default.ParseArguments<Configuration>(args)
 if (!errorHandle.HasError)
 {
 
-    var checkUrls = new GoogleTranslate(configuration);
-    await checkUrls.CheckAsync();
+    var translate = new GoogleTranslateFiles(configuration);
+    await translate.TranslateAsync();
 
-    checkUrls.PrintResult();
+    translate.PrintResult();
 }
