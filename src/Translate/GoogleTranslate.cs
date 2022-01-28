@@ -29,52 +29,77 @@ public class GoogleTranslateFiles : IGoogleTranslate
         _translate = translate;
     }
 
-    public Task TranslateAsync()
+    public async Task TranslateAsync()
     {
         var files = _files.GetFiles(_config.SrcPath, _config.MaskFiles);
 
         foreach (var file in files)
         {
-            try
+            await TranslateFile(file);
+        }
+    }
+
+    /// <summary>
+    /// Translate one file
+    /// </summary>
+    /// <param name="fileName">Full file name</param>
+    private async Task TranslateFile(string fileName)
+    {
+        try
+        {
+            var content = _files.GetContent(fileName);
+            if (string.IsNullOrEmpty(content))
             {
-                var content = _files.GetContent(file);
-                if (string.IsNullOrEmpty(content))
-                {
-                    _logger.Error($"file content is empty: {file}");
-                    continue;
-                }
-
-                var (chunckes, infos) = _convert.GetConverts(content);
-                var sb = new StringBuilder();
-                foreach (var chunck in chunckes)
-                {
-                    var translateText = await _translate.TranslateAsync(chunck);
-                    sb.Append(translateText);
-                }
-
-                var (res, translatedContent) = _convert.UnConvert(sb.ToString(), infos);
-
-                if (res)
-                {
-                    _files.SaveFiles(file, _config.SrcPath, _config.AdditionalExt, translatedContent);
-                    _filesSuccess.Add(file, translatedContent.Length);
-                    _bytes += translatedContent.Length;
-                }
-                else
-                {
-                    _filesFailed.Add(file, 1);
-                }
+                _logger.Error($"file content is empty: {fileName}");
+                return;
             }
-            catch (Exception e)
+
+            var convertResult = _convert.Convert(content);
+            var sb = new StringBuilder();
+            foreach (var chunck in convertResult.Chunks)
             {
-                _logger.Error($"translating file {file} failed, {e}");
-                _filesFailed.Add(file, 1);
+                var translateText = await _translate.TranslateAsync(chunck, _config.SrcLang, _config.DstLang);
+                sb.Append(translateText);
             }
+
+            var (res, translatedContent) = _convert.UnConvert(sb.ToString(), convertResult.Converts);
+
+            if (res)
+            {
+                _files.SaveFiles(fileName, _config.SrcPath, _config.AdditionalExt, translatedContent);
+                _filesSuccess.Add(fileName, translatedContent.Length);
+                _bytes += translatedContent.Length;
+            }
+            else
+            {
+                _filesFailed.Add(fileName, 1);
+            }
+        }
+        catch (Exception e)
+        {
+            _logger.Error($"translating file {fileName} failed, {e}");
+            _filesFailed.Add(fileName, 1);
         }
     }
 
     public void PrintResult()
     {
-        throw new NotImplementedException();
+        var count = 0;
+        foreach (var success in _filesSuccess)
+        {
+            _logger.Info($"success: {success.Key} {success.Value} bytes");
+            count++;
+        }
+
+        _logger.Info($"Total success {count}");
+
+        count = 0;
+        foreach (var failed in _filesFailed)
+        {
+            _logger.Info($"failed: {failed.Key} {failed.Value} bytes");
+            count++;
+        }
+
+        _logger.Info($"Total failed {count}");
     }
 }

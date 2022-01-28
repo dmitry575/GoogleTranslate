@@ -26,5 +26,5 @@ public interface IFile
     /// Read data from file
     /// </summary>
     /// <param name="file">File name</param>
-    string? GetContent(string file);
+    string GetContent(string file);
 }

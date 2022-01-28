@@ -1,27 +1,32 @@
-﻿namespace GoogleTranslate.Common.Impl;
+﻿using System.Text;
 
-public class File: IFile
+namespace GoogleTranslate.Common.Impl;
+
+public class File : IFile
 {
+    /// <inheritdoc />
     public List<string> GetFiles(string srcPath, string mask = "*.txt")
     {
         return Directory.GetFiles(srcPath, mask).ToList();
     }
 
+    /// <inheritdoc />
     public void SaveFiles(string srcFileName, string dstPath, string additionalExt, string content)
     {
         var fInfo = new FileInfo(srcFileName);
-        var fileResultName =  fInfo.Name.Substring(0, fInfo.Name.Length - fInfo.Extension.Length)  + additionalExt  + fInfo.Extension;
+        var sb = new StringBuilder();
+        var fileResultName =
+            sb.Append(fInfo.Name.Substring(0, fInfo.Name.Length - fInfo.Extension.Length))
+                .Append(additionalExt)
+                .Append(fInfo.Extension)
+                .ToString();
 
-        System.IO.File.WriteAllText(fileResultName, content)
+        System.IO.File.WriteAllText(fileResultName, content);
     }
 
-    public string? GetContent(string file)
+    /// <inheritdoc />
+    public string GetContent(string file)
     {
-        if (!System.IO.File.Exists(file))
-        {
-            return null;
-        }
-
-        return System.IO.File.ReadAllText(file);
+        return !System.IO.File.Exists(file) ? null : System.IO.File.ReadAllText(file);
     }
 }
