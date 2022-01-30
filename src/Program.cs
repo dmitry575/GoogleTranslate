@@ -28,7 +28,7 @@ if (!errorHandle.HasError)
     var translate = new GoogleTranslateFiles(configuration,
         new GoogleTranslate.Common.Impl.File(),
         new ConvertHtml(),
-        new GoogleTranslateRequest());
+        new GoogleTranslateRequest(configuration));
     await translate.TranslateAsync();
 
     translate.PrintResult();

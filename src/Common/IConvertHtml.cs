@@ -17,6 +17,7 @@ public interface IConvertHtml
     /// Unconverted text to clean string
     /// </summary>
     /// <param name="dirtyContent">Content with special tags</param>
-    /// <param name="convertInfo">Information what change</param>
-    (bool, string) UnConvert(string dirtyContent, Dictionary<int, string> convertInfo);
+    /// <param name="groups">Information what change by group of elements</param>
+    /// <param name="tags">Information what tags need change</param>
+    string UnConvert(string dirtyContent, Dictionary<int, string> groups,Dictionary<int, string> tags);
 }
