@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Web;
 using GoogleTranslate.Config;
@@ -47,15 +48,7 @@ public class GoogleTranslateRequest : IGoogleTranslateRequest
 
         string query = string.Format("sl={0}&tl={1}&q={2}", HttpUtility.UrlEncode(srcLang), HttpUtility.UrlEncode(dstLang), HttpUtility.UrlEncode(text));
 
-        Dictionary<string, string> options = new Dictionary<string, string>()
-        {
-            { "Accept", "text/json" },
-            { "UserAgent", "AndroidTranslate/5.3.0.RC02.130475354-53000263 5.1 phone TRANSLATE_OPM5_TEST_1" },
-            { "Accept-Language", "en_US" },
-            { "Content-Type", "application/x-www-form-urlencoded" },
-        };
-
-        var response = await Policy.HandleResult<HttpWebResponse>(x => x.StatusCode != HttpStatusCode.OK)
+        var response = await Policy.HandleResult<HttpResponseMessage>(x => x.StatusCode != HttpStatusCode.OK)
             .WaitAndRetryAsync(
                 RetryCount,
                 retryAttempt => TimeSpan.FromSeconds(Math.Pow(4, retryAttempt)))
@@ -67,64 +60,62 @@ public class GoogleTranslateRequest : IGoogleTranslateRequest
             throw new Exception("failed request to " + url + ", " + query);
         }
 
-        Stream responseStream = response.GetResponseStream();
+        var responseStream = await response.Content.ReadAsStreamAsync();
         if (responseStream == null)
-            throw new Exception("request failed");
-
+            throw new Exception("response stream get request failed");
+// reading json
         string json;
         using (var reader = new StreamReader(responseStream))
-        //---
             json = await reader.ReadToEndAsync();
 
-        var transalteText = new StringBuilder();
-        
-        if (!string.IsNullOrEmpty(json))
-        {
-            try
-            {
-                GoogelResult result = JsonConvert.DeserializeObject<GoogelResult>(json);
+        var builder = new StringBuilder();
 
-                if (result is { Sentenses: { Count: > 0 } })
+        if (string.IsNullOrEmpty(json)) return string.Empty;
+        
+        try
+        {
+            GoogelResult result = JsonConvert.DeserializeObject<GoogelResult>(json);
+
+            if (result is { Sentenses: { Count: > 0 } })
+            {
+                foreach (var sentense in result.Sentenses.Where(sentense => sentense != null && !string.IsNullOrEmpty(sentense.Trans)))
                 {
-                    foreach (GoogleSentense sentense in result.Sentenses)
-                    {
-                        if (sentense == null || string.IsNullOrEmpty(sentense.Trans))
-                            continue;
-                        //
-                        if (transalteText.Length > 0) transalteText.Append(" ");
-                        transalteText.Append(sentense.Trans.Trim());
-                    }
+                    if (builder.Length > 0) builder.Append(" ");
+                    builder.Append(sentense.Trans.Trim());
                 }
             }
-            catch (Exception e)
-            {
-                throw new Exception("failed parsing json: " + json + ", " + e.Message);
-            }
+        }
+        catch (Exception e)
+        {
+            throw new Exception("failed parsing json: " + json + ", " + e.Message);
         }
 
-
-        return transalteText.ToString();
+        return builder.ToString();
     }
 
-    private async Task<HttpWebResponse> PostRequest(string url, string query)
+    private async Task<HttpResponseMessage> PostRequest(string url, string query)
     {
-        var request = (HttpWebRequest)WebRequest.Create(url);
-        request.Method = "POST";
-        request.Accept = "text/json";
-        request.UserAgent = "AndroidTranslate/5.3.0.RC02.130475354-53000263 5.1 phone TRANSLATE_OPM5_TEST_1";
-        request.Timeout = 300 * 1000;
-        request.Headers.Add("Accept-Language", "en_US");
-        request.ContentType = "application/x-www-form-urlencoded";
-        var queryBytes = Encoding.UTF8.GetBytes(query);
-        request.ContentLength = queryBytes.Length;
+        HttpClientHandler httpClientHandler = new HttpClientHandler()
+        {
+            PreAuthenticate = false,
+            UseDefaultCredentials = true,
+        };
+
         if (!string.IsNullOrEmpty(_config.Proxy))
         {
-            request.Proxy = new WebProxy(_config.Proxy);
+            httpClientHandler.Proxy = new WebProxy(_config.Proxy);
         }
 
-        await using (var stream = request.GetRequestStream())
-            await stream.WriteAsync(queryBytes, 0, queryBytes.Length);
-        //--- вычитка данных 
-        return (HttpWebResponse)await request.GetResponseAsync();
+        using var client = new HttpClient(httpClientHandler);
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-www-form-urlencoded"));
+        client.DefaultRequestHeaders.Add("User-Agent", "AndroidTranslate/5.3.0.RC02.130475354-53000263 5.1 phone TRANSLATE_OPM5_TEST_1");
+        client.DefaultRequestHeaders.Add("Accept-Language", "en_US");
+
+        client.DefaultRequestHeaders.Add("Accept-Language", "en_US");
+        client.Timeout = TimeSpan.FromSeconds(300);
+
+        var data = new StringContent(query, Encoding.UTF8, "application/x-www-form-urlencoded");
+
+        return await client.PostAsync(url, data);
     }
 }
