@@ -3,7 +3,6 @@
 using System.Reflection;
 using CommandLine;
 using GoogleTranslate.Common;
-using GoogleTranslate.Common.Impl;
 using GoogleTranslate.Config;
 using GoogleTranslate.Errors;
 using GoogleTranslate.Translate;
@@ -29,7 +28,8 @@ if (!errorHandle.HasError)
         new GoogleTranslate.Common.Impl.File(),
         new ConvertHtml(),
         new GoogleTranslateRequest(configuration));
-    await translate.TranslateAsync();
+    
+    translate.Translate();
 
     translate.PrintResult();
 }

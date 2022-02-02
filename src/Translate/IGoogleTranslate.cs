@@ -5,7 +5,7 @@ public interface IGoogleTranslate
     /// <summary>
     /// Translate
     /// </summary>
-    Task TranslateAsync();
+    void Translate();
 
     /// <summary>
     /// Printing result

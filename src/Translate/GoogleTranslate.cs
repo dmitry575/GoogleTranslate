@@ -42,6 +42,8 @@ public class GoogleTranslateFiles : IGoogleTranslate
     private Dictionary<string, int> _filesSuccess = new Dictionary<string, int>();
     private Dictionary<string, int> _filesFailed = new Dictionary<string, int>();
 
+    private readonly object _lockObj = new object();
+
     public GoogleTranslateFiles(Configuration config, IFile files, IConvertHtml convert, IGoogleTranslateRequest translate)
     {
         _config = config;
@@ -50,16 +52,29 @@ public class GoogleTranslateFiles : IGoogleTranslate
         _translate = translate;
     }
 
-    public async Task TranslateAsync()
+    public void Translate()
     {
         var files = _files.GetFiles(_config.SrcPath, _config.MaskFiles);
 
         _logger.Info($"Reading files from {_config.SrcPath} {_config.MaskFiles}");
 
+        var tasks = new Task[_config.Threads];
+        var count = 0;
+        var idx = 0;
         foreach (var file in files)
         {
-            await TranslateFile(file);
+            if (count > _config.Threads)
+            {
+                idx = Task.WaitAny(tasks);
+                count--;
+            }
+
+            tasks[idx] = TranslateFile(file);
         }
+
+        Task.WaitAll(tasks);
+        
+        _logger.Info($"translated {_bytes} bytes");
     }
 
     /// <summary>
@@ -84,25 +99,31 @@ public class GoogleTranslateFiles : IGoogleTranslate
                 var convertResult = _convert.Convert(content);
                 var sb = new StringBuilder();
 
-                foreach (var chunck in convertResult.Content.GetChunks(MaxLengthChunk))
+                foreach (var chunk in convertResult.Content.GetChunks(MaxLengthChunk))
                 {
-                    var translateText = await _translate.TranslateAsync(chunck, _config.SrcLang, _config.DstLang);
+                    var translateText = await _translate.TranslateAsync(chunk, _config.SrcLang, _config.DstLang);
                     sb.Append(translateText);
                 }
 
                 var translatedContent = _convert.UnConvert(sb.ToString(), convertResult.Groups, convertResult.Tags);
 
                 _files.SaveFiles(fileName, _config.GetDstPath(), _config.AdditionalExt, translatedContent);
-                
+
                 _logger.Info($"translated file of {fileName} saved");
-                
-                _filesSuccess.Add(fileName, translatedContent.Length);
-                _bytes += translatedContent.Length;
+
+                lock (_lockObj)
+                {
+                    _filesSuccess.Add(fileName, translatedContent.Length);
+                    _bytes += translatedContent.Length;
+                }
             }
             catch (Exception e)
             {
                 _logger.Error($"translating file {fileName} failed, {e}");
-                _filesFailed.Add(fileName, 1);
+                lock (_lockObj)
+                {
+                    _filesFailed.Add(fileName, 1);
+                }
             }
         }
     }
