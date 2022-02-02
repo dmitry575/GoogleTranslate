@@ -54,6 +54,8 @@ public class GoogleTranslateFiles : IGoogleTranslate
     {
         var files = _files.GetFiles(_config.SrcPath, _config.MaskFiles);
 
+        _logger.Info($"Reading files from {_config.SrcPath} {_config.MaskFiles}");
+
         foreach (var file in files)
         {
             await TranslateFile(file);
@@ -66,34 +68,42 @@ public class GoogleTranslateFiles : IGoogleTranslate
     /// <param name="fileName">Full file name</param>
     private async Task TranslateFile(string fileName)
     {
-        try
+        using (LogicalThreadContext.Stacks["NDC"].Push($"Filename: {fileName}"))
         {
-            var content = _files.GetContent(fileName);
-            if (string.IsNullOrEmpty(content))
+            try
             {
-                _logger.Error($"file content is empty: {fileName}");
-                return;
+                _logger.Info($"starting translating file: {fileName}");
+
+                var content = _files.GetContent(fileName);
+                if (string.IsNullOrEmpty(content))
+                {
+                    _logger.Error($"file content is empty: {fileName}");
+                    return;
+                }
+
+                var convertResult = _convert.Convert(content);
+                var sb = new StringBuilder();
+
+                foreach (var chunck in convertResult.Content.GetChunks(MaxLengthChunk))
+                {
+                    var translateText = await _translate.TranslateAsync(chunck, _config.SrcLang, _config.DstLang);
+                    sb.Append(translateText);
+                }
+
+                var translatedContent = _convert.UnConvert(sb.ToString(), convertResult.Groups, convertResult.Tags);
+
+                _files.SaveFiles(fileName, _config.GetDstPath(), _config.AdditionalExt, translatedContent);
+                
+                _logger.Info($"translated file of {fileName} saved");
+                
+                _filesSuccess.Add(fileName, translatedContent.Length);
+                _bytes += translatedContent.Length;
             }
-
-            var convertResult = _convert.Convert(content);
-            var sb = new StringBuilder();
-
-            foreach (var chunck in convertResult.Content.GetChunks(MaxLengthChunk))
+            catch (Exception e)
             {
-                var translateText = await _translate.TranslateAsync(chunck, _config.SrcLang, _config.DstLang);
-                sb.Append(translateText);
+                _logger.Error($"translating file {fileName} failed, {e}");
+                _filesFailed.Add(fileName, 1);
             }
-
-            var translatedContent = _convert.UnConvert(sb.ToString(), convertResult.Groups, convertResult.Tags);
-
-            _files.SaveFiles(fileName, _config.SrcPath, _config.AdditionalExt, translatedContent);
-            _filesSuccess.Add(fileName, translatedContent.Length);
-            _bytes += translatedContent.Length;
-        }
-        catch (Exception e)
-        {
-            _logger.Error($"translating file {fileName} failed, {e}");
-            _filesFailed.Add(fileName, 1);
         }
     }
 

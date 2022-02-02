@@ -21,7 +21,12 @@ public class File : IFile
                 .Append(fInfo.Extension)
                 .ToString();
 
-        System.IO.File.WriteAllText(fileResultName, content);
+        if (!Directory.Exists(dstPath))
+        {
+            Directory.CreateDirectory(dstPath);
+        }
+
+        System.IO.File.WriteAllText(Path.Combine(dstPath, fileResultName), content);
     }
 
     /// <inheritdoc />

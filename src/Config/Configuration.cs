@@ -23,12 +23,12 @@ public class Configuration
     public int Threads { get; set; } = 1;
 
     [Option('r', "srcPath", Required = true, HelpText = "Source path where files for translations")]
-    public string SrcPath { get; set; }
+    public string SrcPath { get; set; } = "./";
 
     [Option('o', "dstPath", Required = true, HelpText = "Output path for translated files")]
-    public string DstPath { get; set; }
+    public string DstPath { get; set; }= "./";
 
-    [Option('a', "dstPath", Required = true, HelpText = "Additional ext for translated files, for example: source file.txt, the result file_en.ru.txt, you need use -a _en.ru")]
+    [Option('a', "additionalExt", Required = true, HelpText = "Additional ext for translated files, for example: source file.txt, the result file_en.ru.txt, you need use \"-a _en.ru\"")]
     public string AdditionalExt { get; set; }
 
     [Option('m', "maskFiles", Required = false, HelpText = "Max of file for translating, default *.txt")]
@@ -36,4 +36,12 @@ public class Configuration
     
     [Option('t', "html", Required = false, HelpText = "Is it html files, if html turn on special converting of content before sending to Google.Translate")]
     public bool IsHtml { get; set; }
+
+    /// <summary>
+    /// Get destination path for saving files
+    /// </summary>
+    public string GetDstPath()
+    {
+        return !string.IsNullOrEmpty(DstPath) ? DstPath : SrcPath;
+    }
 }

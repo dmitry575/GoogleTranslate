@@ -10,8 +10,10 @@
         <Authors>Dmitry Tarakanov</Authors>
         <Company>Dmitry Tarakanov</Company>
         <Product>Files are translated throught Google Translate</Product>
-        <Description>Program Google Translate</Description>
+        <Description>Translating files by Google Translate</Description>
         <RepositoryUrl>https://github.com/dmitry575/GoogleTranslate</RepositoryUrl>
+        <Copyright>Dmitry Tarakanov</Copyright>
+        <PackageProjectUrl>https://github.com/dmitry575/GoogleTranslate</PackageProjectUrl>
         
     </PropertyGroup>
 

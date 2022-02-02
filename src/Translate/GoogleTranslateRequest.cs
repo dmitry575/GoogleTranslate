@@ -62,8 +62,11 @@ public class GoogleTranslateRequest : IGoogleTranslateRequest
 
         var responseStream = await response.Content.ReadAsStreamAsync();
         if (responseStream == null)
+        {
             throw new Exception("response stream get request failed");
-// reading json
+        }
+
+        // reading json
         string json;
         using (var reader = new StreamReader(responseStream))
             json = await reader.ReadToEndAsync();
@@ -71,7 +74,7 @@ public class GoogleTranslateRequest : IGoogleTranslateRequest
         var builder = new StringBuilder();
 
         if (string.IsNullOrEmpty(json)) return string.Empty;
-        
+
         try
         {
             GoogelResult result = JsonConvert.DeserializeObject<GoogelResult>(json);
@@ -93,6 +96,11 @@ public class GoogleTranslateRequest : IGoogleTranslateRequest
         return builder.ToString();
     }
 
+    /// <summary>
+    /// Post request to Google Translate
+    /// </summary>
+    /// <param name="url">Url for request</param>
+    /// <param name="query">Query</param>
     private async Task<HttpResponseMessage> PostRequest(string url, string query)
     {
         HttpClientHandler httpClientHandler = new HttpClientHandler()
@@ -111,7 +119,6 @@ public class GoogleTranslateRequest : IGoogleTranslateRequest
         client.DefaultRequestHeaders.Add("User-Agent", "AndroidTranslate/5.3.0.RC02.130475354-53000263 5.1 phone TRANSLATE_OPM5_TEST_1");
         client.DefaultRequestHeaders.Add("Accept-Language", "en_US");
 
-        client.DefaultRequestHeaders.Add("Accept-Language", "en_US");
         client.Timeout = TimeSpan.FromSeconds(300);
 
         var data = new StringContent(query, Encoding.UTF8, "application/x-www-form-urlencoded");
