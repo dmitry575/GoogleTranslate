@@ -14,7 +14,7 @@ public class GoogleTranslateFiles : IGoogleTranslate
     /// <summary>
     /// Max length of text witch can to send to google translate
     /// </summary>
-    private const int MaxLengthChunk = 3000;
+    private const int MaxLengthChunk = 1000;
 
     private static readonly ILog _logger = LogManager.GetLogger(typeof(GoogleTranslateFiles));
 
@@ -63,17 +63,18 @@ public class GoogleTranslateFiles : IGoogleTranslate
         var idx = 0;
         foreach (var file in files)
         {
-            if (count > _config.Threads)
+            if (count >= _config.Threads)
             {
                 idx = Task.WaitAny(tasks);
                 count--;
             }
 
             tasks[idx] = TranslateFile(file);
+            count++;
         }
 
         Task.WaitAll(tasks);
-        
+
         _logger.Info($"translated {_bytes} bytes");
     }
 
@@ -105,7 +106,16 @@ public class GoogleTranslateFiles : IGoogleTranslate
                     sb.Append(translateText);
                 }
 
-                var translatedContent = _convert.UnConvert(sb.ToString(), convertResult.Groups, convertResult.Tags);
+                string translatedContent;
+                try
+                {
+                    translatedContent = _convert.UnConvert(sb.ToString(), convertResult.Groups, convertResult.Tags);
+                }
+                catch (Exception)
+                {
+                    _logger.Error($"sourse: {content}\r\n\r\nconvert: {convertResult.Content}\r\n\r\ntranslate: {sb}");
+                    throw;
+                }
 
                 _files.SaveFiles(fileName, _config.GetDstPath(), _config.AdditionalExt, translatedContent);
 

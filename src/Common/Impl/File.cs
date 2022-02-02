@@ -7,7 +7,11 @@ public class File : IFile
     /// <inheritdoc />
     public List<string> GetFiles(string srcPath, string mask = "*.txt")
     {
-        return Directory.GetFiles(srcPath, mask).ToList();
+        if (Directory.Exists(srcPath))
+        {
+            return Directory.GetFiles(srcPath, mask).ToList();
+        }
+        return new List<string>();
     }
 
     /// <inheritdoc />

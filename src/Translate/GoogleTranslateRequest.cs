@@ -83,8 +83,17 @@ public class GoogleTranslateRequest : IGoogleTranslateRequest
             {
                 foreach (var sentense in result.Sentenses.Where(sentense => sentense != null && !string.IsNullOrEmpty(sentense.Trans)))
                 {
+                    if (string.IsNullOrEmpty(sentense.Trans))
+                    {
+                        continue;
+                    }
+
                     if (builder.Length > 0) builder.Append(" ");
-                    builder.Append(sentense.Trans.Trim());
+                    var sen = sentense.Trans.Trim();
+
+                    builder.Append(sen);
+                    if (sentense.Orig.EndsWith(".") && !sen.EndsWith("."))
+                        builder.Append(".");
                 }
             }
         }

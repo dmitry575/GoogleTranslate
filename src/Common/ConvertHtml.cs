@@ -15,6 +15,7 @@ public class ConvertHtml : IConvertHtml
     private const string GroupPrefixTag = "12";
     private readonly Regex _regexSpace = new Regex("[ ]{2,}", RegexOptions.None);
 
+    private readonly Regex _regexUrls = new Regex(@"(((http|ftp|https):\/\/)+[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&amp;:\/~\+#]*[\w\-\@?^=%&amp;\/~\+#])?)");
 
     public ConvertResult Convert(string content)
     {
@@ -183,7 +184,7 @@ public class ConvertHtml : IConvertHtml
                 if (!HtmlNode.IsEmptyElement(node.Name))
                 {
                     htmlTags.Add(index, GetTagClose(node));
-                    HtmlNode newNodeClose = HtmlNode.CreateNode($"[{PrefixTag}{index}] ");
+                    HtmlNode newNodeClose = HtmlNode.CreateNode($" [{PrefixTag}{index}] ");
                     index++;
                     parentNode.InsertAfter(newNodeClose, node);
                 }
@@ -203,7 +204,24 @@ public class ConvertHtml : IConvertHtml
             }
         }
 
-        return (hap.DocumentNode.InnerHtml, htmlTags);
+        var content = hap.DocumentNode.InnerHtml;
+        content = ReplaceUrls(content, htmlTags, index);
+        return (content, htmlTags);
+    }
+
+    /// <summary>
+    /// Replace urls in content 
+    /// </summary>
+    /// <param name="content">Current content</param>
+    /// <param name="htmlTags">Html tags witch already canged</param>
+    /// <param name="index">Index</param>
+    private string ReplaceUrls(string content, Dictionary<int, string> htmlTags, int index)
+    {
+        return _regexUrls.Replace(content, delegate (Match m)
+        {
+            htmlTags.Add(++index, m.Value);
+            return $"[{PrefixTag}{index}]";
+        });
     }
 
     private string GetTagAttributes(HtmlNode node)
@@ -235,18 +253,18 @@ public class ConvertHtml : IConvertHtml
         return string.Format("</" + node.OriginalName + ">");
     }
 
-    public string UnConvert(string dirtyContent, Dictionary<int, string> groups,Dictionary<int, string> tags)
+    public string UnConvert(string dirtyContent, Dictionary<int, string> groups, Dictionary<int, string> tags)
     {
         var html = GetUnClean(
             GetUnGroup(
-                GetAfterTranslate(dirtyContent), 
+                GetAfterTranslate(dirtyContent),
                 groups),
             tags);
         html = html.Replace("<p> ", "<p>");
         html = html.Replace("<\\p> ", "<\\p>");
         return html;
     }
-    
+
     /// <summary>
     /// Collecting tags
     /// </summary>
@@ -266,7 +284,7 @@ public class ConvertHtml : IConvertHtml
         }
         return clean;
     }
-    
+
     private string GetUnGroup(string translate, Dictionary<int, string> tagsGroups)
     {
         var result = translate;
@@ -291,7 +309,7 @@ public class ConvertHtml : IConvertHtml
 
         return result;
     }
-    
+
     private string GetUnClean(string translate, Dictionary<int, string> tags)
     {
         var result = translate;

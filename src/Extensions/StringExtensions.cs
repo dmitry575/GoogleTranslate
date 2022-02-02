@@ -34,7 +34,13 @@ public static class StringExtensions
             for (; end > pos; end--)
             {
                 if (Delimitary.IndexOf(content[end]) > -1)
-                    break;
+                {
+                    // if before space
+                    if (end != (pos + maxLength) && content[end + 1] == ' ')
+                    {
+                        break;
+                    }
+                }
             }
 
             // if do not find any split, set spit as space
