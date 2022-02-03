@@ -17,6 +17,8 @@ public class ConvertHtml : IConvertHtml
 
     private readonly Regex _regexUrls = new Regex(@"(((http|ftp|https):\/\/)+[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&amp;:\/~\+#]*[\w\-\@?^=%&amp;\/~\+#])?)");
 
+    private readonly Regex _regexHooks = new Regex(@"(\(|\))+");
+
     public ConvertResult Convert(string content)
     {
         var result = new ConvertResult();
@@ -205,24 +207,32 @@ public class ConvertHtml : IConvertHtml
         }
 
         var content = hap.DocumentNode.InnerHtml;
-        content = ReplaceUrls(content, htmlTags, index);
+        content = Replaces(content, htmlTags, index);
         return (content, htmlTags);
     }
 
     /// <summary>
-    /// Replace urls in content 
+    /// Different replaces
     /// </summary>
-    /// <param name="content">Current content</param>
-    /// <param name="htmlTags">Html tags witch already canged</param>
-    /// <param name="index">Index</param>
-    private string ReplaceUrls(string content, Dictionary<int, string> htmlTags, int index)
+    /// <param name="content">Content</param>
+    /// <param name="htmlTags">Tags</param>
+    /// <param name="index">Current index fro tags</param>
+    private string Replaces(string content, Dictionary<int, string> htmlTags, int index)
     {
-        return _regexUrls.Replace(content, delegate (Match m)
+        content = _regexUrls.Replace(content, delegate (Match m)
         {
             htmlTags.Add(++index, m.Value);
             return $"[{PrefixTag}{index}]";
         });
+
+        content = _regexHooks.Replace(content, delegate (Match m)
+        {
+            htmlTags.Add(++index, m.Value);
+            return $"[{PrefixTag}{index}]";
+        });
+        return content;
     }
+
 
     private string GetTagAttributes(HtmlNode node)
     {
