@@ -77,23 +77,29 @@ public class GoogleTranslateRequest : IGoogleTranslateRequest
 
         try
         {
-            GoogelResult result = JsonConvert.DeserializeObject<GoogelResult>(json);
+            var result = JsonConvert.DeserializeObject<GoogelResult>(json);
 
             if (result is { Sentenses: { Count: > 0 } })
             {
-                foreach (var sentense in result.Sentenses.Where(sentense => sentense != null && !string.IsNullOrEmpty(sentense.Trans)))
+                foreach (var sentence in result.Sentenses.Where(sentence => sentence != null && !string.IsNullOrEmpty(sentence.Trans)))
                 {
-                    if (string.IsNullOrEmpty(sentense.Trans))
+                    if (string.IsNullOrEmpty(sentence.Trans))
                     {
                         continue;
                     }
 
-                    if (builder.Length > 0) builder.Append(" ");
-                    var sen = sentense.Trans.Trim();
+                    if (builder.Length > 0)
+                    {
+                        builder.Append(' ');
+                    }
+
+                    var sen = sentence.Trans.Trim();
 
                     builder.Append(sen);
-                    if (sentense.Orig.EndsWith(".") && !sen.EndsWith("."))
-                        builder.Append(".");
+                    if (sentence.Orig.EndsWith(".") && !sen.EndsWith("."))
+                    {
+                        builder.Append('.');
+                    }
                 }
             }
         }
@@ -112,7 +118,7 @@ public class GoogleTranslateRequest : IGoogleTranslateRequest
     /// <param name="query">Query</param>
     private async Task<HttpResponseMessage> PostRequest(string url, string query)
     {
-        HttpClientHandler httpClientHandler = new HttpClientHandler()
+        var httpClientHandler = new HttpClientHandler()
         {
             PreAuthenticate = false,
             UseDefaultCredentials = true,
