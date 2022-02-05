@@ -126,7 +126,7 @@ public class GoogleTranslateFiles : IGoogleTranslate
                 }
                 catch (Exception)
                 {
-                    _logger.Error($"sourse: {content}\r\n\r\nconvert: {contentTranslate}\r\n\r\ntranslate: {sb}");
+                    _logger.Error($"sourse: {content}\r\n\r\nconvert: {contentTranslate}\r\n\r\ntranslate: {sb}\r\n\r\n");
                     throw;
                 }
                 _files.SaveFiles(fileName, _config.GetDstPath(), _config.AdditionalExt, translatedContent);

@@ -17,7 +17,7 @@ public class ConvertHtml : IConvertHtml
 
     private readonly Regex _regexUrls = new Regex(@"(((http|ftp|https):\/\/)+[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&amp;:\/~\+#]*[\w\-\@?^=%&amp;\/~\+#])?)");
 
-    private readonly Regex _regexHooks = new Regex(@"(\(|\)|#|~|\*|:)+");
+    private readonly Regex _regexHooks = new Regex(@"(\(|\)|#|~|\*|:|-|_)+");
 
     public ConvertResult Convert(string content)
     {
