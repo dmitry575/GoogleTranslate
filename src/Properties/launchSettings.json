@@ -2,7 +2,7 @@
   "profiles": {
     "GoogleTranslate": {
       "commandName": "Project",
-      "commandLineArgs": "-s en -d ru -r ./files -o ./translated -a _ -m *.html -p http://localhost:5005"
+      "commandLineArgs": "-s en -d ru -r ./files -o ./translated -a _ -m *.html -p http://localhost:5003 -t 1 -l true"
     }
   }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using GoogleTranslate.Common;
+using GoogleTranslate.Common.Models;
 using GoogleTranslate.Config;
 using GoogleTranslate.Extensions;
 using log4net;
@@ -50,6 +51,9 @@ public class GoogleTranslateFiles : IGoogleTranslate
         _files = files;
         _convert = convert;
         _translate = translate;
+
+        // checking thread configuration
+        if (_config.Threads <= 0 || _config.Threads > 20) _config.Threads = 1;
     }
 
     public void Translate()
@@ -58,22 +62,23 @@ public class GoogleTranslateFiles : IGoogleTranslate
 
         _logger.Info($"Reading files from {_config.SrcPath} {_config.MaskFiles}");
 
-        var tasks = new Task[_config.Threads];
-        var count = 0;
-        var idx = 0;
+        var tasks = new Task[Math.Min(_config.Threads, files.Count)];
+        var countThreads = 0;
+        var currentThread = 0;
+
         foreach (var file in files)
         {
-            if (count >= _config.Threads)
+            if (countThreads >= tasks.Count())
             {
-                idx = Task.WaitAny(tasks);
-                count--;
+                currentThread = Task.WaitAny(tasks);
+                countThreads--;
             }
 
-            tasks[idx] = TranslateFile(file);
-            count++;
+            tasks[currentThread++] = TranslateFileAsync(file);
+            countThreads++;
         }
 
-        Task.WaitAll(tasks);
+        Task.WaitAll(tasks.Where(x => x != null).ToArray());
 
         _logger.Info($"translated {_bytes} bytes");
     }
@@ -82,7 +87,7 @@ public class GoogleTranslateFiles : IGoogleTranslate
     /// Translate one file
     /// </summary>
     /// <param name="fileName">Full file name</param>
-    private async Task TranslateFile(string fileName)
+    private async Task TranslateFileAsync(string fileName)
     {
         using (LogicalThreadContext.Stacks["NDC"].Push($"Filename: {fileName}"))
         {
@@ -97,10 +102,18 @@ public class GoogleTranslateFiles : IGoogleTranslate
                     return;
                 }
 
-                var convertResult = _convert.Convert(content);
+                var contentTranslate = content;
+                ConvertResult convertResult = new ConvertResult();
+
+                if (_config.IsHtml)
+                {
+                    convertResult = _convert.Convert(content);
+                    contentTranslate = convertResult.Content;
+
+                }
                 var sb = new StringBuilder();
 
-                foreach (var chunk in convertResult.Content.GetChunks(MaxLengthChunk))
+                foreach (var chunk in contentTranslate.GetChunks(MaxLengthChunk))
                 {
                     var translateText = await _translate.TranslateAsync(chunk, _config.SrcLang, _config.DstLang);
                     sb.Append(translateText);
@@ -109,14 +122,13 @@ public class GoogleTranslateFiles : IGoogleTranslate
                 string translatedContent;
                 try
                 {
-                    translatedContent = _convert.UnConvert(sb.ToString(), convertResult.Groups, convertResult.Tags);
+                    translatedContent = GetTranslatedContent(sb.ToString(), convertResult);
                 }
                 catch (Exception)
                 {
-                    _logger.Error($"sourse: {content}\r\n\r\nconvert: {convertResult.Content}\r\n\r\ntranslate: {sb}");
+                    _logger.Error($"sourse: {content}\r\n\r\nconvert: {contentTranslate}\r\n\r\ntranslate: {sb}");
                     throw;
                 }
-
                 _files.SaveFiles(fileName, _config.GetDstPath(), _config.AdditionalExt, translatedContent);
 
                 _logger.Info($"translated file of {fileName} saved");
@@ -135,6 +147,25 @@ public class GoogleTranslateFiles : IGoogleTranslate
                     _filesFailed.Add(fileName, 1);
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Get translated content after converting if needed
+    /// </summary>
+    /// <param name="v"></param>
+    /// <param name="convertResult"></param>
+    /// <returns></returns>
+    /// <exception cref="NotImplementedException"></exception>
+    private string GetTranslatedContent(string translated, ConvertResult convertResult)
+    {
+        if (_config.IsHtml)
+        {
+            return _convert.UnConvert(translated, convertResult.Groups, convertResult.Tags);
+        }
+        else
+        {
+            return translated;
         }
     }
 

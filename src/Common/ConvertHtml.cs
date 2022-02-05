@@ -17,7 +17,7 @@ public class ConvertHtml : IConvertHtml
 
     private readonly Regex _regexUrls = new Regex(@"(((http|ftp|https):\/\/)+[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&amp;:\/~\+#]*[\w\-\@?^=%&amp;\/~\+#])?)");
 
-    private readonly Regex _regexHooks = new Regex(@"(\(|\))+");
+    private readonly Regex _regexHooks = new Regex(@"(\(|\)|#|~|\*|:)+");
 
     public ConvertResult Convert(string content)
     {
@@ -151,24 +151,13 @@ public class ConvertHtml : IConvertHtml
     private (string, Dictionary<int, string>) CleanHtml(HtmlDocument hap, int index = 0)
     {
         var htmlTags = new Dictionary<int, string>();
-        var nodes = new Queue<HtmlNode>(hap.DocumentNode.SelectNodes("./*|./text()"));
-        while (nodes.Count > 0)
+        foreach (var tagName in _tagsNotTranslate)
         {
-            var node = nodes.Dequeue();
-
-            var parentNode = node.ParentNode;
-            if (_tagsNotTranslate.Contains(node.Name) && node.Name != "#text")
-            {
-                htmlTags.Add(index, node.OuterHtml);
-                HtmlNode child = HtmlNode.CreateNode($" [{PrefixTag}{index}] ");
-                index++;
-
-                parentNode.InsertBefore(child, node);
-                parentNode.RemoveChild(node);
-            }
+            var nodesQueue = new Queue<HtmlNode>(hap.DocumentNode.SelectNodes($"//{tagName}|./text()"));
+            CleanNotTranslateTags(nodesQueue, htmlTags, ref index);
         }
 
-        nodes = new Queue<HtmlNode>(hap.DocumentNode.SelectNodes("./*|./text()"));
+       var  nodes = new Queue<HtmlNode>(hap.DocumentNode.SelectNodes("./*|./text()"));
         while (nodes.Count > 0)
         {
             var node = nodes.Dequeue();
@@ -209,6 +198,27 @@ public class ConvertHtml : IConvertHtml
         var content = hap.DocumentNode.InnerHtml;
         content = Replaces(content, htmlTags, index);
         return (content, htmlTags);
+    }
+
+    private void CleanNotTranslateTags(Queue<HtmlNode>  nodes, Dictionary<int, string> htmlTags, ref int index)
+    {
+        while (nodes.Count > 0)
+        {
+
+
+            var node = nodes.Dequeue();
+
+            var parentNode = node.ParentNode;
+            if (_tagsNotTranslate.Contains(node.Name) && node.Name != "#text")
+            {
+                htmlTags.Add(index, node.OuterHtml);
+                HtmlNode child = HtmlNode.CreateNode($" [{PrefixTag}{index}] ");
+                index++;
+
+                parentNode.InsertBefore(child, node);
+                parentNode.RemoveChild(node);
+            }
+        }
     }
 
     /// <summary>
@@ -272,6 +282,8 @@ public class ConvertHtml : IConvertHtml
             tags);
         html = html.Replace("<p> ", "<p>");
         html = html.Replace("<\\p> ", "<\\p>");
+        html = html.Replace(" ,", ",");
+        html = html.Replace(" .", ".");
         return html;
     }
 

@@ -33,9 +33,9 @@ public class Configuration
 
     [Option('m', "maskFiles", Required = false, HelpText = "Max of file for translating, default *.txt")]
     public string MaskFiles { get; set; } = "*.txt";
-    
-    [Option('t', "html", Required = false, HelpText = "Is it html files, if html turn on special converting of content before sending to Google.Translate")]
-    public bool IsHtml { get; set; }
+
+    [Option('l', "html", Required = false, HelpText = "Is it html files, if html turn on special converting of content before sending to Google.Translate")]
+    public bool IsHtml { get; set; } = false;
 
     /// <summary>
     /// Get destination path for saving files
