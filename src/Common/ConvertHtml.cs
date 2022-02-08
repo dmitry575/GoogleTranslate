@@ -8,21 +8,22 @@ namespace GoogleTranslate.Common;
 
 public class ConvertHtml : IConvertHtml
 {
-    private readonly List<string> _tagsNotTranslate = new List<string> { "pre", "code" };
+    private readonly List<string> _tagsNotTranslate = new List<string> { "pre", "code", "blockquote" };
     private readonly char[] _listNumbers = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-    private readonly char[] _listSpaces = { ' ', '\r', '\n' };
+    private readonly char[] _listSpaces = { ' ' };
     private const string PrefixTag = "11";
     private const string GroupPrefixTag = "12";
     private readonly Regex _regexSpace = new Regex("[ ]{2,}", RegexOptions.None);
 
     private readonly Regex _regexUrls = new Regex(@"(((http|ftp|https):\/\/)+[\w\-_]+(\.[\w\-_]+)+([\w\-\.,@?^=%&amp;:\/~\+#]*[\w\-\@?^=%&amp;\/~\+#])?)");
 
-    private readonly Regex _regexHooks = new Regex(@"(\(|\)|#|~|\*|:|-|_)+");
+    private readonly Regex _regexHooks = new Regex(@"(\(|\)|#|~|\*|:|-|_|`)+");
 
     public ConvertResult Convert(string content)
     {
         var result = new ConvertResult();
         string clean;
+        content = content.Replace("&#39;", "'");
         (clean, result.Tags) = GetClean(content);
 
         (clean, result.Groups) = GetGroup(clean);
@@ -40,7 +41,7 @@ public class ConvertHtml : IConvertHtml
     {
         var groupTags = new Dictionary<int, string>();
         clean = clean.Trim();
-        clean = clean.Replace("\r\n", " ");
+        //clean = clean.Replace("\r\n", " ");
 
         // empty or space symbol
         const int EMPTY = 0;
@@ -129,6 +130,10 @@ public class ConvertHtml : IConvertHtml
         clean = clean.Replace("![12", "! [12");
 
         clean = _regexSpace.Replace(clean, " ");
+
+        // need for google
+        clean = clean.Replace(" ,", ",");
+        
         return (clean, groupTags);
     }
 
@@ -157,7 +162,7 @@ public class ConvertHtml : IConvertHtml
             CleanNotTranslateTags(nodesQueue, htmlTags, ref index);
         }
 
-       var  nodes = new Queue<HtmlNode>(hap.DocumentNode.SelectNodes("./*|./text()"));
+        var nodes = new Queue<HtmlNode>(hap.DocumentNode.SelectNodes("./*|./text()"));
         while (nodes.Count > 0)
         {
             var node = nodes.Dequeue();
@@ -200,7 +205,7 @@ public class ConvertHtml : IConvertHtml
         return (content, htmlTags);
     }
 
-    private void CleanNotTranslateTags(Queue<HtmlNode>  nodes, Dictionary<int, string> htmlTags, ref int index)
+    private void CleanNotTranslateTags(Queue<HtmlNode> nodes, Dictionary<int, string> htmlTags, ref int index)
     {
         while (nodes.Count > 0)
         {
@@ -232,13 +237,13 @@ public class ConvertHtml : IConvertHtml
         content = _regexUrls.Replace(content, delegate (Match m)
         {
             htmlTags.Add(++index, m.Value);
-            return $"[{PrefixTag}{index}]";
+            return $" [{PrefixTag}{index}] ";
         });
 
         content = _regexHooks.Replace(content, delegate (Match m)
         {
             htmlTags.Add(++index, m.Value);
-            return $"[{PrefixTag}{index}]";
+            return $" [{PrefixTag}{index}] ";
         });
         return content;
     }
