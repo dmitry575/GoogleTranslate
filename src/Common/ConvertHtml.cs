@@ -10,7 +10,7 @@ public class ConvertHtml : IConvertHtml
 {
     private readonly List<string> _tagsNotTranslate = new List<string> { "pre", "code", "blockquote" };
     private readonly char[] _listNumbers = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-    private readonly char[] _listSpaces = { ' ' };
+    private readonly char[] _listSpaces = { ' ','\r','\n' };
     private const string PrefixTag = "11";
     private const string GroupPrefixTag = "12";
     private readonly Regex _regexSpace = new Regex("[ ]{2,}", RegexOptions.None);
@@ -120,7 +120,7 @@ public class ConvertHtml : IConvertHtml
 
         foreach (var key in groupTags.Keys.ToArray())
         {
-            clean = clean.Replace(groupTags[key], $" [{GroupPrefixTag}{key}] ");
+            clean = clean.Replace(groupTags[key], $" [{GroupPrefixTag}{key}] \r\n");
             groupTags[key] = _regexSpace.Replace(groupTags[key], " ");
         }
 
