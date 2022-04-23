@@ -15,7 +15,7 @@ public class GoogleTranslateFiles : IGoogleTranslate
     /// <summary>
     /// Max length of text witch can to send to google translate
     /// </summary>
-    private const int MaxLengthChunk = 2000;
+    private const int MaxLengthChunk = 500;
 
     private static readonly ILog _logger = LogManager.GetLogger(typeof(GoogleTranslateFiles));
 
@@ -40,8 +40,8 @@ public class GoogleTranslateFiles : IGoogleTranslate
     private readonly IGoogleTranslateRequest _translate;
 
     private int _bytes = 0;
-    private Dictionary<string, int> _filesSuccess = new Dictionary<string, int>();
-    private Dictionary<string, int> _filesFailed = new Dictionary<string, int>();
+    private readonly Dictionary<string, int> _filesSuccess = new Dictionary<string, int>();
+    private readonly Dictionary<string, int> _filesFailed = new Dictionary<string, int>();
 
     private readonly object _lockObj = new object();
 
