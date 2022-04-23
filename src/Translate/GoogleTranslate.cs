@@ -15,7 +15,12 @@ public class GoogleTranslateFiles : IGoogleTranslate
     /// <summary>
     /// Max length of text witch can to send to google translate
     /// </summary>
-    private const int MaxLengthChunk = 500;
+    private const int MaxLengthChunk = 2500;
+
+    /// <summary>
+    /// If after translated html content get exception, try translate again but MaxLengthChunk divided by 2 
+    /// </summary>
+    private const int MaxLevel = 5;
 
     private static readonly ILog _logger = LogManager.GetLogger(typeof(GoogleTranslateFiles));
 
@@ -83,10 +88,6 @@ public class GoogleTranslateFiles : IGoogleTranslate
         _logger.Info($"translated {_bytes} bytes");
     }
 
-    /// <summary>
-    /// Translate one file
-    /// </summary>
-    /// <param name="fileName">Full file name</param>
     private async Task TranslateFileAsync(string fileName)
     {
         using (LogicalThreadContext.Stacks["NDC"].Push($"Filename: {fileName}"))
@@ -109,26 +110,10 @@ public class GoogleTranslateFiles : IGoogleTranslate
                 {
                     convertResult = _convert.Convert(content);
                     contentTranslate = convertResult.Content;
-
-                }
-                var sb = new StringBuilder();
-
-                foreach (var chunk in contentTranslate.GetChunks(MaxLengthChunk))
-                {
-                    var translateText = await _translate.TranslateAsync(chunk, _config.SrcLang, _config.DstLang);
-                    sb.Append(translateText);
                 }
 
-                string translatedContent;
-                try
-                {
-                    translatedContent = GetTranslatedContent(sb.ToString(), convertResult);
-                }
-                catch (Exception)
-                {
-                    _logger.Error($"sourse: {content}\r\n\r\nconvert: {contentTranslate}\r\n\r\ntranslate: {sb}\r\n\r\n");
-                    throw;
-                }
+                var translatedContent = await GetTranslateAsync(contentTranslate, convertResult);
+
                 _files.SaveFiles(fileName, _config.GetDstPath(), _config.AdditionalExt, translatedContent);
 
                 _logger.Info($"translated file of {fileName} saved");
@@ -151,24 +136,71 @@ public class GoogleTranslateFiles : IGoogleTranslate
     }
 
     /// <summary>
+    /// Translating text
+    /// </summary>
+    /// <param name="contentTranslate"></param>
+    /// <param name="convertResult"></param>
+    /// <param name="maxChunkLength"></param>
+    /// <param name="level"></param>
+    /// <returns></returns>
+    private async Task<string> GetTranslateAsync(string contentTranslate, ConvertResult convertResult, int maxChunkLength = MaxLengthChunk, int level = 1)
+    {
+        var sb = new StringBuilder();
+
+        foreach (var chunk in contentTranslate.GetChunks(maxChunkLength))
+        {
+            var translateText = await _translate.TranslateAsync(chunk, _config.SrcLang, _config.DstLang);
+            if (sb.Length > 0)
+            {
+                sb.Append(' ');
+            }
+
+            sb.Append(translateText);
+        }
+
+        string translatedContent;
+        try
+        {
+            translatedContent = GetTranslatedContent(sb.ToString(), convertResult);
+        }
+        catch (ConvertException e)
+        {
+            _logger.Error($"get translated text failed, current mac chunk: {maxChunkLength}, level:{level} : {e}");
+            if (level > MaxLevel)
+            {
+                // throw exception to another handler of exception
+                throw;
+            }
+
+            return await GetTranslateAsync(contentTranslate, convertResult, maxChunkLength / 2, level + 1);
+        }
+        catch (Exception)
+        {
+            _logger.Error($"convert: {contentTranslate}\r\n\r\ntranslate: {sb}\r\n\r\n");
+            throw;
+        }
+
+        return translatedContent;
+    }
+
+    /// <summary>
     /// Get translated content after converting if needed
     /// </summary>
-    /// <param name="v"></param>
-    /// <param name="convertResult"></param>
-    /// <returns></returns>
-    /// <exception cref="NotImplementedException"></exception>
+    /// <param name="translated">Translated text</param>
+    /// <param name="convertResult">Data of converting</param>
     private string GetTranslatedContent(string translated, ConvertResult convertResult)
     {
         if (_config.IsHtml)
         {
             return _convert.UnConvert(translated, convertResult.Groups, convertResult.Tags);
         }
-        else
-        {
-            return translated;
-        }
+
+        return translated;
     }
 
+    /// <summary>
+    /// Print result of translating files
+    /// </summary>
     public void PrintResult()
     {
         var count = 0;

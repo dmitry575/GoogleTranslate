@@ -10,7 +10,7 @@ public class ConvertHtml : IConvertHtml
 {
     private readonly List<string> _tagsNotTranslate = new List<string> { "pre", "code", "blockquote" };
     private readonly char[] _listNumbers = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-    private readonly char[] _listSpaces = { ' ','\r','\n' };
+    private readonly char[] _listSpaces = { ' ', '\r', '\n' };
     private const string PrefixTag = "11";
     private const string GroupPrefixTag = "12";
     private readonly Regex _regexSpace = new Regex("[ ]{2,}", RegexOptions.None);
@@ -133,7 +133,7 @@ public class ConvertHtml : IConvertHtml
 
         // need for google
         clean = clean.Replace(" ,", ",");
-        
+
         return (clean, groupTags);
     }
 
@@ -143,8 +143,11 @@ public class ConvertHtml : IConvertHtml
     /// <param name="html">Dirty html</param>
     private (string, Dictionary<int, string>) GetClean(string html)
     {
-        HtmlDocument hap = new HtmlDocument();
-        hap.OptionWriteEmptyNodes = true;
+        var hap = new HtmlDocument
+        {
+            OptionWriteEmptyNodes = true
+        };
+
         hap.LoadHtml(html);
         return CleanHtml(hap);
     }
@@ -158,45 +161,53 @@ public class ConvertHtml : IConvertHtml
         var htmlTags = new Dictionary<int, string>();
         foreach (var tagName in _tagsNotTranslate)
         {
-            var nodesQueue = new Queue<HtmlNode>(hap.DocumentNode.SelectNodes($"//{tagName}|./text()"));
-            CleanNotTranslateTags(nodesQueue, htmlTags, ref index);
+            var collections = hap.DocumentNode.SelectNodes($"//{tagName}|./text()");
+            if (collections != null)
+            {
+                var nodesQueue = new Queue<HtmlNode>();
+                CleanNotTranslateTags(nodesQueue, htmlTags, ref index);
+            }
         }
 
-        var nodes = new Queue<HtmlNode>(hap.DocumentNode.SelectNodes("./*|./text()"));
-        while (nodes.Count > 0)
+        var nodeCollections = hap.DocumentNode.SelectNodes("./*|./text()");
+        if (nodeCollections != null)
         {
-            var node = nodes.Dequeue();
-            var parentNode = node.ParentNode;
-
-            if (node.Name != "#text")
+            var nodes = new Queue<HtmlNode>(nodeCollections);
+            while (nodes.Count > 0)
             {
-                htmlTags.Add(index, GetTagAttributes(node));
-                HtmlNode newNode = HtmlNode.CreateNode($" [{PrefixTag}{index}] ");
-                index++;
+                var node = nodes.Dequeue();
+                var parentNode = node.ParentNode;
 
-                parentNode.InsertBefore(newNode, node);
-
-                // closing tag
-                if (!HtmlNode.IsEmptyElement(node.Name))
+                if (node.Name != "#text")
                 {
-                    htmlTags.Add(index, GetTagClose(node));
-                    HtmlNode newNodeClose = HtmlNode.CreateNode($" [{PrefixTag}{index}] ");
+                    htmlTags.Add(index, GetTagAttributes(node));
+                    var newNode = HtmlNode.CreateNode($" [{PrefixTag}{index}] ");
                     index++;
-                    parentNode.InsertAfter(newNodeClose, node);
-                }
 
-                var childNodes = node.SelectNodes("./*|./text()");
+                    parentNode.InsertBefore(newNode, node);
 
-                if (childNodes != null)
-                {
-                    foreach (var child in childNodes)
+                    // closing tag
+                    if (!HtmlNode.IsEmptyElement(node.Name))
                     {
-                        nodes.Enqueue(child);
-                        parentNode.InsertBefore(child, node);
+                        htmlTags.Add(index, GetTagClose(node));
+                        var newNodeClose = HtmlNode.CreateNode($" [{PrefixTag}{index}] ");
+                        index++;
+                        parentNode.InsertAfter(newNodeClose, node);
                     }
-                }
 
-                parentNode.RemoveChild(node);
+                    var childNodes = node.SelectNodes("./*|./text()");
+
+                    if (childNodes != null)
+                    {
+                        foreach (var child in childNodes)
+                        {
+                            nodes.Enqueue(child);
+                            parentNode.InsertBefore(child, node);
+                        }
+                    }
+
+                    parentNode.RemoveChild(node);
+                }
             }
         }
 
@@ -209,15 +220,13 @@ public class ConvertHtml : IConvertHtml
     {
         while (nodes.Count > 0)
         {
-
-
             var node = nodes.Dequeue();
 
             var parentNode = node.ParentNode;
             if (_tagsNotTranslate.Contains(node.Name) && node.Name != "#text")
             {
                 htmlTags.Add(index, node.OuterHtml);
-                HtmlNode child = HtmlNode.CreateNode($" [{PrefixTag}{index}] ");
+                var child = HtmlNode.CreateNode($" [{PrefixTag}{index}] ");
                 index++;
 
                 parentNode.InsertBefore(child, node);
@@ -234,13 +243,13 @@ public class ConvertHtml : IConvertHtml
     /// <param name="index">Current index fro tags</param>
     private string Replaces(string content, Dictionary<int, string> htmlTags, int index)
     {
-        content = _regexUrls.Replace(content, delegate (Match m)
+        content = _regexUrls.Replace(content, delegate(Match m)
         {
             htmlTags.Add(++index, m.Value);
             return $" [{PrefixTag}{index}] ";
         });
 
-        content = _regexHooks.Replace(content, delegate (Match m)
+        content = _regexHooks.Replace(content, delegate(Match m)
         {
             htmlTags.Add(++index, m.Value);
             return $" [{PrefixTag}{index}] ";
@@ -304,11 +313,13 @@ public class ConvertHtml : IConvertHtml
         {
             clean = regex.Replace(clean, "[$1]");
         }
+
         Regex regexGroup = new Regex(@"\[\s*(" + GroupPrefixTag + @"[0-9]+)\s*\]");
         if (regexGroup.IsMatch(clean))
         {
             clean = regexGroup.Replace(clean, "[$1]");
         }
+
         return clean;
     }
 
@@ -327,10 +338,18 @@ public class ConvertHtml : IConvertHtml
 
             if (!result.Contains("[" + key + "]"))
             {
-                throw new Exception($"not found key [{key}] for {tagsGroup.Value}");
+                throw new ConvertException($"not found key [{key}] for {tagsGroup.Value}");
             }
 
-            result = result.Replace(" [" + key + "] ", tagsGroup.Value);
+            if (tagsGroup.Value.StartsWith("</"))
+            {
+                result = result.Replace(" [" + key + "]", tagsGroup.Value);
+            }
+            else
+            {
+                result = result.Replace("[" + key + "] ", tagsGroup.Value);
+            }
+
             result = result.Replace("[" + key + "]", tagsGroup.Value);
         }
 
@@ -353,13 +372,13 @@ public class ConvertHtml : IConvertHtml
 
             if (!result.Contains("[" + key + "]"))
             {
-                throw new Exception($"not found key {key} for {tag.Value}");
+                throw new ConvertException($"not found key {key} for {tag.Value}");
             }
+
             result = result.Replace("[" + key + "] ", tag.Value);
             result = result.Replace("[" + key + "]", tag.Value);
         }
 
         return result;
     }
-
 }
