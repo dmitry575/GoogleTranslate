@@ -3,7 +3,6 @@ using GoogleTranslate.Common;
 using GoogleTranslate.Common.Models;
 using GoogleTranslate.Config;
 using GoogleTranslate.Extensions;
-using log4net;
 
 namespace GoogleTranslate.Translate;
 
@@ -15,7 +14,7 @@ public class GoogleTranslateFiles : IGoogleTranslate
     /// <summary>
     /// Max length of text witch can to send to google translate
     /// </summary>
-    private const int MaxLengthChunk = 2000;
+    private const int MaxLengthChunk = 500;
 
     private static readonly ILog _logger = LogManager.GetLogger(typeof(GoogleTranslateFiles));
 
