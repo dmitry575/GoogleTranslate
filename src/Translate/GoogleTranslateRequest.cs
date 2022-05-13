@@ -11,16 +11,16 @@ namespace GoogleTranslate.Translate;
 /// <summary>
 /// Предложение
 /// </summary>
-public class GoogleSentense
+public class GooglesSentence
 {
     [JsonProperty("trans")] public string Trans { get; set; }
     [JsonProperty("orig")] public string Orig { get; set; }
     [JsonProperty("backend")] public string Backend { get; set; }
 }
 
-public class GoogelResult
+public class GoogleResult
 {
-    [JsonProperty("sentences")] public List<GoogleSentense> Sentenses { get; set; }
+    [JsonProperty("sentences")] public List<GooglesSentence> Sentenses { get; set; }
     [JsonProperty("src")] public string Src { get; set; }
 }
 
@@ -46,7 +46,7 @@ public class GoogleTranslateRequest : IGoogleTranslateRequest
             return string.Empty;
         }
 
-        string query = string.Format("sl={0}&tl={1}&q={2}", HttpUtility.UrlEncode(srcLang), HttpUtility.UrlEncode(dstLang), HttpUtility.UrlEncode(text));
+        string query = $"sl={HttpUtility.UrlEncode(srcLang)}&tl={HttpUtility.UrlEncode(dstLang)}&q={HttpUtility.UrlEncode(text)}";
 
         var response = await Policy.HandleResult<HttpResponseMessage>(x => x.StatusCode != HttpStatusCode.OK)
             .WaitAndRetryAsync(
@@ -77,7 +77,7 @@ public class GoogleTranslateRequest : IGoogleTranslateRequest
 
         try
         {
-            var result = JsonConvert.DeserializeObject<GoogelResult>(json);
+            var result = JsonConvert.DeserializeObject<GoogleResult>(json);
 
             if (result is { Sentenses: { Count: > 0 } })
             {
