@@ -164,7 +164,7 @@ public class ConvertHtml : IConvertHtml
             var collections = hap.DocumentNode.SelectNodes($"//{tagName}|./text()");
             if (collections != null)
             {
-                var nodesQueue = new Queue<HtmlNode>();
+                var nodesQueue = new Queue<HtmlNode>(collections);
                 CleanNotTranslateTags(nodesQueue, htmlTags, ref index);
             }
         }

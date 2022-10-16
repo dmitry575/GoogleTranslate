@@ -18,9 +18,14 @@ public class GoogleTranslateFiles : IGoogleTranslate
     private const int MaxLengthChunk = 2500;
 
     /// <summary>
+    /// How many times need to split text
+    /// </summary>
+    private const int SplitTextTimes = 3;
+
+    /// <summary>
     /// If after translated html content get exception, try translate again but MaxLengthChunk divided by 2 
     /// </summary>
-    private const int MaxLevel = 5;
+    private const int MaxLevel = 10;
 
     private static readonly ILog _logger = LogManager.GetLogger(typeof(GoogleTranslateFiles));
 
@@ -165,14 +170,15 @@ public class GoogleTranslateFiles : IGoogleTranslate
         }
         catch (ConvertException e)
         {
-            _logger.Error($"get translated text failed, current mac chunk: {maxChunkLength}, level:{level} : {e}");
+            _logger.Error($"get translated text failed, current max chunk: {maxChunkLength}, level:{level} : {e}");
             if (level > MaxLevel)
             {
                 // throw exception to another handler of exception
+                _logger.Error($"get translated text failed, too many attempts");
                 throw;
             }
 
-            return await GetTranslateAsync(contentTranslate, convertResult, maxChunkLength / 2, level + 1);
+            return await GetTranslateAsync(contentTranslate, convertResult, maxChunkLength / SplitTextTimes, level + 1);
         }
         catch (Exception)
         {

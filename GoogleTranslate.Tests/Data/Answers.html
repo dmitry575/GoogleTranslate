@@ -1,0 +1,44 @@
+﻿<p>
+    You can boot ubuntu from cd without installing and see if everything needed is working.
+    Usually that's a pretty good hint to what hardware works out of the box.
+</p>
+
+<p>There's a comprehensive howto and "whatis" on the help pages:</p>
+
+<p><a href="https://help.ubuntu.com/community/LiveCD" rel="nofollow">https://help.ubuntu.com/community/LiveCD</a></p>
+
+
+    -121---451217-
+
+<p>Navigate to Miscellaneous Setting :</p>
+
+<p><img src="https://i.stack.imgur.com/2GtAi.png" alt="enter image description here"></p>
+
+<p>Just be sure there is not <strong>/</strong> before <strong>wp-content</strong></p>
+
+
+    -121---444617-
+
+<p>First install dependencies:</p>
+
+<pre><code>sudo apt-get install build-essential libqt4-dev libx11-6 libx11-dev
+</code></pre>
+
+<p>Download the .zip file from <a href="https://github.com/Raffarti/Touchegg-gce/" rel="noreferrer">here</a></p>
+
+<pre><code>cd ~/Downloads
+unzip Touchegg-gce-master.zip
+cd Touchegg-gce-master
+qmake
+make &amp;&amp; sudo make install
+</code></pre>
+
+<p>To launch <code>touchegg-gce</code> you have to go to that particular folder.</p>
+
+<p>The binary is installed in <code>/usr/local/bin</code>, check your PATH. Or start via your Application Launcher, there is a <code>desktop</code> file in <code>/usr/local/share/applications/touchegg-gce.desktop</code></p>
+
+<p><a href="https://i.stack.imgur.com/219xx.png" rel="noreferrer"><img src="https://i.stack.imgur.com/219xx.png" alt="enter image description here"></a></p>
+
+
+    -121---375892-
+

@@ -22,9 +22,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="CommandLineParser" Version="2.8.0" />
-      <PackageReference Include="HtmlAgilityPack" Version="1.11.42" />
-      <PackageReference Include="log4net" Version="2.0.14" />
+      <PackageReference Include="CommandLineParser" Version="2.9.1" />
+      <PackageReference Include="HtmlAgilityPack" Version="1.11.46" />
+      <PackageReference Include="log4net" Version="2.0.15" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
       <PackageReference Include="Polly" Version="7.2.3" />
       <PackageReference Include="Polly.Extensions.Http" Version="3.0.0" />

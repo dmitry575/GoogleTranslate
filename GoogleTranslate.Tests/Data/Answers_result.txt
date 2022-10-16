@@ -1,0 +1,14 @@
+﻿[116] 
+ You can boot ubuntu from cd without installing and see if everything needed is working.
+ Usually that's a pretty good hint to what hardware works out of the box.
+ [120] 
+There's a comprehensive howto and "whatis" on the help pages [121] 
+121 [1144] 451217 [122] 
+Navigate to Miscellaneous Setting [123] 
+Just be sure there is not [1131] / [1132] before [1133] wp [1147] content [124] 
+121 [1149] 444617 [125] 
+First install dependencies [126] 
+Download the .zip file from [1135] here [127] 
+To launch [112] you have to go to that particular folder. [128] 
+The binary is installed in [113], check your PATH. Or start via your Application Launcher, there is a [114] file in [129] 
+121 [1153] 375892 [1210] 
