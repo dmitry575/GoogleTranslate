@@ -18,7 +18,7 @@ public interface IFile
     /// </summary>
     /// <param name="srcFileName">Source file name from this name get file name for saving</param>
     /// <param name="dstPath">Path for saving files</param>
-    /// <param name="additionalExt">Addintional for name file</param>
+    /// <param name="additionalExt">Additional for name file</param>
     /// <param name="content">Content for saving</param>
     void SaveFiles(string srcFileName, string dstPath, string additionalExt, string content);
     

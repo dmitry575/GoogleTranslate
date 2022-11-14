@@ -28,7 +28,7 @@ public class Configuration
     [Option('o', "dstPath", Required = true, HelpText = "Output path for translated files")]
     public string DstPath { get; set; }= "./";
 
-    [Option('a', "additionalExt", Required = true, HelpText = "Additional ext for translated files, for example: source file.txt, the result file_en.ru.txt, you need use \"-a _en.ru\"")]
+    [Option('a', "additionalExt", Required = false, HelpText = "Additional ext for translated files, for example: source file.txt, the result file_en.ru.txt, you need use \"-a _en.ru\"")]
     public string AdditionalExt { get; set; }
 
     [Option('m', "maskFiles", Required = false, HelpText = "Max of file for translating, default *.txt")]

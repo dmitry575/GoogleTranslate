@@ -30,7 +30,7 @@ public class GoogleTranslateFiles : IGoogleTranslate
     private static readonly ILog _logger = LogManager.GetLogger(typeof(GoogleTranslateFiles));
 
     /// <summary>
-    /// Configuration of transltion
+    /// Configuration of translation
     /// </summary>
     private readonly Configuration _config;
 
@@ -63,7 +63,10 @@ public class GoogleTranslateFiles : IGoogleTranslate
         _translate = translate;
 
         // checking thread configuration
-        if (_config.Threads <= 0 || _config.Threads > 20) _config.Threads = 1;
+        if (_config.Threads <= 0 || _config.Threads > 20)
+        {
+            _config.Threads = 1;
+        }
     }
 
     public void Translate()
@@ -78,7 +81,7 @@ public class GoogleTranslateFiles : IGoogleTranslate
 
         foreach (var file in files)
         {
-            if (countThreads >= tasks.Count())
+            if (countThreads >= tasks.Length)
             {
                 currentThread = Task.WaitAny(tasks);
                 countThreads--;

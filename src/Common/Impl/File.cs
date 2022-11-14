@@ -7,6 +7,14 @@ public class File : IFile
     /// <inheritdoc />
     public List<string> GetFiles(string srcPath, string mask = "*.txt")
     {
+        var isDir = (System.IO.File.GetAttributes(srcPath) & FileAttributes.Directory) == FileAttributes.Directory;
+        
+        // is file name
+        if (!isDir)
+        {
+            return new List<string> { srcPath };
+        }
+
         if (Directory.Exists(srcPath))
         {
             return Directory.GetFiles(srcPath, mask).ToList();
