@@ -22,9 +22,8 @@ public class ConvertHtml : IConvertHtml
     public ConvertResult Convert(string content)
     {
         var result = new ConvertResult();
-        string clean;
         content = content.Replace("&#39;", "'");
-        (clean, result.Tags) = GetClean(content);
+        (var clean, result.Tags) = GetClean(content);
 
         (clean, result.Groups) = GetGroup(clean);
 
@@ -41,7 +40,6 @@ public class ConvertHtml : IConvertHtml
     {
         var groupTags = new Dictionary<int, string>();
         clean = clean.Trim();
-        //clean = clean.Replace("\r\n", " ");
 
         // empty or space symbol
         const int EMPTY = 0;
