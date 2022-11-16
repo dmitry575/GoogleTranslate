@@ -1,4 +1,4 @@
-﻿using GoogleTranslate.Common;
+﻿using GoogleTranslate.Common.Impl;
 using NUnit.Framework;
 
 namespace GoogleTranslate.Tests;

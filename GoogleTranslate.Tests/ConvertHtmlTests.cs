@@ -1,6 +1,6 @@
-using GoogleTranslate.Common;
 using NUnit.Framework;
-using System.IO;
+using GoogleTranslate.Common.Impl;
+using File = System.IO.File;
 
 namespace GoogleTranslate.Tests
 {
