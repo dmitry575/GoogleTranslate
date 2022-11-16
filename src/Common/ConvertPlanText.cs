@@ -11,7 +11,9 @@ public sealed class ConvertPlanText : IConvertPlanText
 
     private readonly char[] _listNumbers = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
     private readonly char[] _listSpaces = { ' ', '\r', '\n' };
-    
+
+    private readonly List<string> _strNotTranslate = new List<string> { "\r\n" };
+
     /// <summary>
     /// Clean double spaces
     /// </summary>
@@ -33,7 +35,12 @@ public sealed class ConvertPlanText : IConvertPlanText
     private (string clean, Dictionary<int, string> Tags) GetClean(string content)
     {
         var index = 0;
-        return (content,new Dictionary<int, string>());
+        foreach (var str in _strNotTranslate)
+        {
+            content = Regex.Replace(content, str, match => $"[{PrefixTag}{index++}]");
+        }
+
+        return (content, new Dictionary<int, string>());
     }
 
     /// <summary>
@@ -121,7 +128,7 @@ public sealed class ConvertPlanText : IConvertPlanText
 
         foreach (var key in groupTags.Keys.ToArray())
         {
-            clean = clean.Replace(groupTags[key], $" [{GroupPrefixTag}{key}] \r\n");
+            clean = clean.Replace(groupTags[key], $" [{GroupPrefixTag}{key}] ");
             groupTags[key] = _regexSpace.Replace(groupTags[key], " ");
         }
 
