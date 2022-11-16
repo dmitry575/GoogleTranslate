@@ -3,9 +3,9 @@
 namespace GoogleTranslate.Common;
 
 /// <summary>
-/// Convert symbols in plan text
+/// Converting url for google translate
 /// </summary>
-public interface IConvertPlanText
+public interface IConvert
 {
     /// <summary>
     /// Converting html to another format, because Google translate begin translate html tags 

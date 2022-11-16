@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 using CommandLine;
-using GoogleTranslate.Common;
+using GoogleTranslate.Common.Impl;
 using GoogleTranslate.Config;
 using GoogleTranslate.Errors;
 using GoogleTranslate.Translate;
@@ -25,7 +25,7 @@ if (!errorHandle.HasError)
     // without dependency injection
     var translate = new GoogleTranslateFiles(configuration,
         new GoogleTranslate.Common.Impl.File(),
-        new ConvertHtml(),
+        new ConvertFactory(),
         new GoogleTranslateRequest(configuration));
 
     translate.Translate();

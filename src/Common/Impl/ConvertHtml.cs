@@ -4,9 +4,9 @@ using System.Text.RegularExpressions;
 using GoogleTranslate.Common.Models;
 using HtmlAgilityPack;
 
-namespace GoogleTranslate.Common;
+namespace GoogleTranslate.Common.Impl;
 
-public class ConvertHtml : IConvertHtml
+public class ConvertHtml : IConvert
 {
     private readonly List<string> _tagsNotTranslate = new List<string> { "pre", "code", "blockquote" };
     private readonly char[] _listNumbers = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
@@ -241,13 +241,13 @@ public class ConvertHtml : IConvertHtml
     /// <param name="index">Current index fro tags</param>
     private string Replaces(string content, Dictionary<int, string> htmlTags, int index)
     {
-        content = _regexUrls.Replace(content, delegate(Match m)
+        content = _regexUrls.Replace(content, delegate (Match m)
         {
             htmlTags.Add(++index, m.Value);
             return $" [{PrefixTag}{index}] ";
         });
 
-        content = _regexHooks.Replace(content, delegate(Match m)
+        content = _regexHooks.Replace(content, delegate (Match m)
         {
             htmlTags.Add(++index, m.Value);
             return $" [{PrefixTag}{index}] ";

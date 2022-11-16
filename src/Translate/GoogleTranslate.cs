@@ -40,9 +40,9 @@ public class GoogleTranslateFiles : IGoogleTranslate
     private readonly IFile _files;
 
     /// <summary>
-    /// Helping for work with converting text, if it's html text
+    /// Helping for work with converting text, if it's html text or plan text
     /// </summary>
-    private readonly IConvertHtml _convert;
+    private readonly IConvert _convertor;
 
     /// <summary>
     /// Sending request to google translate
@@ -55,11 +55,11 @@ public class GoogleTranslateFiles : IGoogleTranslate
 
     private readonly object _lockObj = new object();
 
-    public GoogleTranslateFiles(Configuration config, IFile files, IConvertHtml convert, IGoogleTranslateRequest translate)
+    public GoogleTranslateFiles(Configuration config, IFile files, IConvertFactory convertFactory, IGoogleTranslateRequest translate)
     {
         _config = config;
         _files = files;
-        _convert = convert;
+        _convertor = convertFactory.Create(_config.IsHtml);
         _translate = translate;
 
         // checking thread configuration
@@ -111,14 +111,10 @@ public class GoogleTranslateFiles : IGoogleTranslate
                     return;
                 }
 
-                var contentTranslate = content;
-                ConvertResult convertResult = new ConvertResult();
 
-                if (_config.IsHtml)
-                {
-                    convertResult = _convert.Convert(content);
-                    contentTranslate = convertResult.Content;
-                }
+                var convertResult = _convertor.Convert(content);
+
+                var contentTranslate = convertResult.Content;
 
                 var translatedContent = await GetTranslateAsync(contentTranslate, convertResult);
 
@@ -146,11 +142,6 @@ public class GoogleTranslateFiles : IGoogleTranslate
     /// <summary>
     /// Translating text
     /// </summary>
-    /// <param name="contentTranslate"></param>
-    /// <param name="convertResult"></param>
-    /// <param name="maxChunkLength"></param>
-    /// <param name="level"></param>
-    /// <returns></returns>
     private async Task<string> GetTranslateAsync(string contentTranslate, ConvertResult convertResult, int maxChunkLength = MaxLengthChunk, int level = 1)
     {
         var sb = new StringBuilder();
@@ -169,7 +160,7 @@ public class GoogleTranslateFiles : IGoogleTranslate
         string translatedContent;
         try
         {
-            translatedContent = GetTranslatedContent(sb.ToString(), convertResult);
+            translatedContent = _convertor.UnConvert(sb.ToString(), convertResult.Groups, convertResult.Tags);
         }
         catch (ConvertException e)
         {
@@ -185,26 +176,11 @@ public class GoogleTranslateFiles : IGoogleTranslate
         }
         catch (Exception)
         {
-            _logger.Error($"convert: {contentTranslate}\r\n\r\ntranslate: {sb}\r\n\r\n");
+            _logger.Error($"convertHtml: {contentTranslate}\r\n\r\ntranslate: {sb}\r\n\r\n");
             throw;
         }
 
         return translatedContent;
-    }
-
-    /// <summary>
-    /// Get translated content after converting if needed
-    /// </summary>
-    /// <param name="translated">Translated text</param>
-    /// <param name="convertResult">Data of converting</param>
-    private string GetTranslatedContent(string translated, ConvertResult convertResult)
-    {
-        if (_config.IsHtml)
-        {
-            return _convert.UnConvert(translated, convertResult.Groups, convertResult.Tags);
-        }
-
-        return translated;
     }
 
     /// <summary>
