@@ -15,12 +15,12 @@ public class GoogleTranslateFiles : IGoogleTranslate
     /// <summary>
     /// Max length of text witch can to send to google translate
     /// </summary>
-    private const int MaxLengthChunk = 2500;
+    private const int MaxLengthChunk = 2000;
 
     /// <summary>
     /// How many times need to split text
     /// </summary>
-    private const int SplitTextTimes = 3;
+    private const int SplitTextTimes = 10;
 
     /// <summary>
     /// If after translated html content get exception, try translate again but MaxLengthChunk divided by 2 
