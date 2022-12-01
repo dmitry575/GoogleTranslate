@@ -26,7 +26,7 @@ public class Configuration
     public string SrcPath { get; set; } = "./";
 
     [Option('o', "dstPath", Required = true, HelpText = "Output path for translated files")]
-    public string DstPath { get; set; }= "./";
+    public string DstPath { get; set; } = "./";
 
     [Option('a', "additionalExt", Required = false, HelpText = "Additional ext for translated files, for example: source file.txt, the result file_en.ru.txt, you need use \"-a _en.ru\"")]
     public string AdditionalExt { get; set; }
@@ -36,6 +36,9 @@ public class Configuration
 
     [Option('l', "html", Required = false, HelpText = "Is it html files, if html turn on special converting of content before sending to Google.Translate")]
     public bool IsHtml { get; set; } = false;
+
+    [Option('s', "service", Required = false, HelpText = "if you want start program as deamon. Using with paramametr and set a number of port on witch service will be listen reuests")]
+    public int Service { get; set; } = -1;
 
     /// <summary>
     /// Get destination path for saving files

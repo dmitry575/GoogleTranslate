@@ -22,6 +22,50 @@ Parser.Default.ParseArguments<Configuration>(args)
 
 if (!errorHandle.HasError)
 {
+    if (configuration.Service > 0) {
+
+        // starting as service
+        StartApp();
+    }
+    else
+    {
+
+        // without dependency injection
+        var translate = new GoogleTranslateFiles(configuration,
+            new GoogleTranslate.Common.Impl.File(),
+            new ConvertFactory(),
+            new GoogleTranslateRequest(configuration));
+
+        translate.Translate();
+
+        translate.PrintResult();
+    }
+}
+
+internal void StartApp()
+{
+    var builder = WebApplication.CreateBuilder(null);
+
+    // Add services to the container.
+    // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+    builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+
+
+app.MapGet("/translate", (string text) =>
+{
     // without dependency injection
     var translate = new GoogleTranslateFiles(configuration,
         new GoogleTranslate.Common.Impl.File(),
@@ -30,5 +74,11 @@ if (!errorHandle.HasError)
 
     translate.Translate();
 
-    translate.PrintResult();
+   
+
+    return forecast;
+})
+.WithName("GetTranslate");
+
+app.Run();
 }
