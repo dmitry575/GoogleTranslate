@@ -26,7 +26,7 @@ For example, we need to translate all html files in folder `files` and translate
 
 If you wand get only one .exe file, run follow command
 
-`dotnet publish src/GoogleTranslate.csproj -c Release -r win-x64 -o ./publish /p:PublishSingleFile=true /p:PublishTrimmed=true`
+`dotnet publish src/GoogleTranslate.csproj -c Release -r win-x64 -o ./publish /p:PublishSingleFile=true /p:PublishTrimmed=true --self-contained`
 
 Easy common command look like:
 
