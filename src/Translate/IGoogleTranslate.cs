@@ -14,9 +14,4 @@ public interface IGoogleTranslate
     /// Printing result
     /// </summary>
     void PrintResult();
-
-    /// <summary>
-    /// Translate text
-    /// </summary>
-    void TranslateText(string text);
 }
